@@ -2,3 +2,4 @@
 !*.hs
 !*.md
 !.gitignore
+!*.sh
