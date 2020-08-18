@@ -40,10 +40,9 @@ parseExpr = parseAtom
          <|> parseString
          <|> parseNumber
 
-readExpr :: String -> String
-readExpr input = case parse parseExpr "lisp" input of
+readExpr input = case parse (spaces >> symbol) "lisp" input of
     Left err -> "No match: " ++ show err
-    Right _ -> "Found value"
+    Right val -> "Found value"
 
 main :: IO ()
 main = do 
