@@ -4,3 +4,4 @@
 !.gitignore
 !*.sh
 !*.scm
+!*.yml
