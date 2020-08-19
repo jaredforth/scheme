@@ -21,3 +21,4 @@ On the command line, run `./scheme` to start the REPL. To load the standard libr
 
 - Document with [Haddock](https://haskell-haddock.readthedocs.io/en/latest/markup.html)
 - Break into seperate files
+- Compile with [Cabal](https://www.haskell.org/cabal/)
