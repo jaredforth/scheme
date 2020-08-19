@@ -16,3 +16,8 @@ ghc -package parsec -fglasgow-exts -o scheme --make scheme.hs
 ## Running the Executable
 
 On the command line, run `./scheme` to start the REPL. To load the standard library, run `(load "stdlib.scm")` in the REPL.
+
+## TODOs
+
+- Document with [Haddock](https://haskell-haddock.readthedocs.io/en/latest/markup.html)
+- Break into seperate files
