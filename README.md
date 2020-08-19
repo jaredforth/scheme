@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.com/jaredforth/scheme.svg?token=mH2pScYxqRkBEzpBQAu6&branch=master)](https://travis-ci.com/jaredforth/scheme)
+![GitHub](https://img.shields.io/github/license/jaredforth/scheme)
+
 # Scheme 
 
 A toy implementation of a subset of Scheme in Haskell.
