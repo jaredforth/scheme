@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/jaredforth/scheme.svg?token=mH2pScYxqRkBEzpBQAu6&branch=master)](https://travis-ci.com/jaredforth/lispy)
+[![Build Status](https://travis-ci.com/jaredforth/scheme.svg?token=mH2pScYxqRkBEzpBQAu6&branch=master)](https://travis-ci.com/jaredforth/scheme)
 ![GitHub](https://img.shields.io/github/license/jaredforth/scheme)
 
 # Scheme 
