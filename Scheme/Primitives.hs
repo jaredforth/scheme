@@ -100,11 +100,6 @@ unpackNum (String n) = let parsed = reads n in
 unpackNum (List [n]) = unpackNum n
 unpackNum notNum     = throwError $ TypeMismatch "number" notNum
 
-trapError action = catchError action (return . show)
-
-extractValue :: ThrowsError a -> a
-extractValue (Right val) = val
-
 car :: [LispVal] -> ThrowsError LispVal
 car [List (x : xs)]         = return x
 car [DottedList (x : xs) _] = return x

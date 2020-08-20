@@ -104,8 +104,8 @@ nullEnv = newIORef []
 type IOThrowsError = ExceptT LispError IO
 
 instance Show LispError where show = showError
-type ThrowsError = Either LispError
 
+-- | Define datatype to represent an error
 data LispError = NumArgs Integer [LispVal]
                | TypeMismatch String LispVal
                | Parser ParseError
@@ -113,6 +113,27 @@ data LispError = NumArgs Integer [LispVal]
                | NotFunction String String
                | UnboundVar String String
                | Default String
+
+-- | Make an instance of `Show`, and define how to print out error types
+showError :: LispError -> String
+showError (UnboundVar message varname)  = message ++ ": " ++ varname
+showError (BadSpecialForm message form) = message ++ ": " ++ show form
+showError (NotFunction message func)    = message ++ ": " ++ show func
+showError (NumArgs expected found)      = "Expected " ++ show expected
+                                       ++ " args; found values " ++ unwordsList found
+showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected
+                                       ++ ", found " ++ show found
+showError (Parser parseErr)             = "Parse error at " ++ show parseErr
+
+-- | Type to represent functions that may throw an error or return a value
+type ThrowsError = Either LispError
+
+-- | Helper function to convert error to string representation
+trapError action = catchError action (return . show)
+
+-- | Extract error value
+extractValue :: ThrowsError a -> a
+extractValue (Right val) = val
 
 readOrThrow :: Parser a -> String -> ThrowsError a
 readOrThrow parser input = case parse parser "lisp" input of
@@ -146,16 +167,6 @@ defineVar envRef var value = do
 makeFunc varargs env params body = return $ Func (map showVal params) varargs body env
 makeNormalFunc = makeFunc Nothing
 makeVarArgs = makeFunc . Just . showVal
-
-showError :: LispError -> String
-showError (UnboundVar message varname)  = message ++ ": " ++ varname
-showError (BadSpecialForm message form) = message ++ ": " ++ show form
-showError (NotFunction message func)    = message ++ ": " ++ show func
-showError (NumArgs expected found)      = "Expected " ++ show expected
-                                       ++ " args; found values " ++ unwordsList found
-showError (TypeMismatch expected found) = "Invalid type: expected " ++ expected
-                                       ++ ", found " ++ show found
-showError (Parser parseErr)             = "Parse error at " ++ show parseErr
 
 
 load :: String -> IOThrowsError [LispVal]
