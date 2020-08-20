@@ -7,18 +7,25 @@ A toy implementation of a subset of Scheme in Haskell.
 
 ## Compilation 
 
-To compile, the `compile.sh` is added for convenience. On the command line, run `./compile.sh` to create an executable. This file simply runs the [GHC compiler](https://www.haskell.org/ghc/) with a couple flags passed:
+This repository uses [Cabal](https://www.haskell.org/cabal/) to manage dependencies and to compile. To install dependencies and build the program, run:
 
 ```shell script
-ghc -package parsec -fglasgow-exts -o scheme --make scheme.hs
+cabal install
+cabal build
 ```
 
 ## Running the Executable
 
-On the command line, run `./scheme` to start the REPL. To load the standard library, run `(load "stdlib.scm")` in the REPL.
+On the command line, run `./scheme` to start the REPL. This file is in `dist/build/scheme/scheme` To load the standard library, run `(load "stdlib.scm")` in the REPL.
+
+## Building the Documentation
+
+To document with [Haddock](https://haskell-haddock.readthedocs.io/en/latest/markup.html), run:
+
+```shell script
+haddock Main.hs --html -o docs
+```
 
 ## TODOs
 
-- Document with [Haddock](https://haskell-haddock.readthedocs.io/en/latest/markup.html)
-- Break into seperate files
-- Compile with [Cabal](https://www.haskell.org/cabal/)
+- Break into separate files
