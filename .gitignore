@@ -1,8 +1,2 @@
-*
-!*.hs
-!*.md
-!.gitignore
-!*.sh
-!*.scm
-!*.yml
-!scheme.cabal
+dist
+.idea

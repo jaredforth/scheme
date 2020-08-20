@@ -1,3 +1,11 @@
+{-|
+Module      : scheme
+Description : A toy implementation of a subset of Scheme in Haskell
+License     : GPL-3
+Maintainer  : jaredforthdev@gmail.com
+Stability   : experimental
+-}
+
 {-# LANGUAGE ExistentialQuantification #-}
 
 module Main where
