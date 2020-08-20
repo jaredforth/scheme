@@ -70,6 +70,7 @@ numericBinop op           []  = throwError $ NumArgs 2 []
 numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal
 numericBinop op params        = mapM unpackNum params >>= return . Number . foldl1 op
 
+-- | Take two arguments and return a boolean
 boolBinop :: (LispVal -> ThrowsError a) -> (a -> a -> Bool) -> [LispVal] -> ThrowsError LispVal
 boolBinop unpacker op args = if length args /= 2
                              then throwError $ NumArgs 2 args
@@ -77,20 +78,26 @@ boolBinop unpacker op args = if length args /= 2
                                      right <- unpacker $ args !! 1
                                      return $ Bool $ left `op` right
 
+-- | Specialize `boolBinop` for integers
 numBoolBinop  = boolBinop unpackNum
+-- | Specialize `boolBinop` for strings
 strBoolBinop  = boolBinop unpackStr
+-- | Specialize `boolBinop` for booleans
 boolBoolBinop = boolBinop unpackBool
 
+-- | Unpack strings from `LispVal`
 unpackStr :: LispVal -> ThrowsError String
 unpackStr (String s) = return s
 unpackStr (Number s) = return $ show s
 unpackStr (Bool s)   = return $ show s
 unpackStr notString  = throwError $ TypeMismatch "string" notString
 
+-- | Unpack booleans from `LispVal`
 unpackBool :: LispVal -> ThrowsError Bool
 unpackBool (Bool b) = return b
 unpackBool notBool  = throwError $ TypeMismatch "boolean" notBool
 
+-- | Unpack numbers from `LispVal`
 unpackNum :: LispVal -> ThrowsError Integer
 unpackNum (Number n) = return n
 unpackNum (String n) = let parsed = reads n in
