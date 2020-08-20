@@ -63,6 +63,26 @@ parseAtom = do
 parseNumber :: Parser LispVal
 parseNumber = liftM (Number . read) $ many1 digit
 
+-- | Function for parsing a list
+parseList :: Parser LispVal
+parseList = liftM List $ sepBy parseExpr spaces
+
+-- | Function for parsing a dotted list
+parseDottedList :: Parser LispVal
+parseDottedList = do
+    head <- endBy parseExpr spaces
+    tail <- char '.' >> spaces >> parseExpr
+    return $ DottedList head tail
+
+-- | Function for parsing a single-quoted value
+parseQuoted :: Parser LispVal
+parseQuoted = do
+    char '\''
+    x <- parseExpr
+    return $ List [Atom "quote", x]
+
+-- | Function for parsing an expression, which can be
+-- am atom, string, number, quoted, list, or dotted list.
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
          <|> parseString
@@ -124,21 +144,6 @@ data LispError = NumArgs Integer [LispVal]
                | NotFunction String String
                | UnboundVar String String
                | Default String
-
-parseList :: Parser LispVal
-parseList = liftM List $ sepBy parseExpr spaces
-
-parseDottedList :: Parser LispVal
-parseDottedList = do
-    head <- endBy parseExpr spaces
-    tail <- char '.' >> spaces >> parseExpr
-    return $ DottedList head tail
-
-parseQuoted :: Parser LispVal
-parseQuoted = do
-    char '\''
-    x <- parseExpr
-    return $ List [Atom "quote", x]
 
 readOrThrow :: Parser a -> String -> ThrowsError a
 readOrThrow parser input = case parse parser "lisp" input of
