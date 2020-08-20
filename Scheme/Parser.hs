@@ -1,6 +1,9 @@
 {-|
 Module      : Scheme.Parser
 Description : Contains logic for the Scheme parser
+License     : GPL-3
+Maintainer  : jaredforthdev@gmail.com
+Stability   : experimental
 -}
 
 module Scheme.Parser where

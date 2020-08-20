@@ -18,9 +18,7 @@ import System.IO
 
 import Data.IORef
 
--- | Import our parser
 import Scheme.Parser
-
 
 primitiveBindings :: IO Env
 primitiveBindings = nullEnv >>= (flip bindVars $ map (makeFunc IOFunc) ioPrimitives
