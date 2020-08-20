@@ -14,6 +14,19 @@ import Data.IORef
 
 import Control.Monad.Except
 
+-- | Define a parser that recognizes allowed symbols in Scheme
+symbol :: Parser Char
+symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
+
+-- | Define a function to call parser and handle errors
+readExpr = readOrThrow parseExpr
+readExprList = readOrThrow (endBy parseExpr spaces)
+
+-- | Ignore spaces when parsing input
+spaces :: Parser ()
+spaces = skipMany1 space
+
+-- | A datatype that can hold any Lisp value
 data LispVal = Atom String
              | List [LispVal]
              | DottedList [LispVal] LispVal
@@ -26,17 +39,29 @@ data LispVal = Atom String
              | IOFunc ([LispVal] -> IOThrowsError LispVal)
              | Port Handle
 
--- | Define a parser that recognizes allowed symbols in Scheme
-symbol :: Parser Char
-symbol = oneOf "!#$%&|*+-/:<=>?@^_~"
+-- | Function for string parsing
+parseString :: Parser LispVal
+parseString = do
+                char '"'
+                x <- many (noneOf "\"")
+                char '"'
+                return $ String x
 
--- | Define a function to call parser and handle errors
-readExpr = readOrThrow parseExpr
-readExprList = readOrThrow (endBy parseExpr spaces)
+-- | Function for parsing an atom, which is is a letter or symbol,
+-- followed by any number of letters, digits, or symbols.
+parseAtom :: Parser LispVal
+parseAtom = do
+              first <- letter <|> symbol
+              rest <- many (letter <|> digit <|> symbol)
+              let atom = first:rest
+              return $ case atom of
+                         "#t" -> Bool True
+                         "#f" -> Bool False
+                         _    -> Atom atom
 
--- TODO document this
-spaces :: Parser ()
-spaces = skipMany1 space
+-- | Function for parsing a number
+parseNumber :: Parser LispVal
+parseNumber = liftM (Number . read) $ many1 digit
 
 parseExpr :: Parser LispVal
 parseExpr = parseAtom
@@ -99,26 +124,6 @@ data LispError = NumArgs Integer [LispVal]
                | NotFunction String String
                | UnboundVar String String
                | Default String
-
-parseString :: Parser LispVal
-parseString = do
-                char '"'
-                x <- many (noneOf "\"")
-                char '"'
-                return $ String x
-
-parseAtom :: Parser LispVal
-parseAtom = do
-              first <- letter <|> symbol
-              rest <- many (letter <|> digit <|> symbol)
-              let atom = first:rest
-              return $ case atom of
-                         "#t" -> Bool True
-                         "#f" -> Bool False
-                         _    -> Atom atom
-
-parseNumber :: Parser LispVal
-parseNumber = liftM (Number . read) $ many1 digit
 
 parseList :: Parser LispVal
 parseList = liftM List $ sepBy parseExpr spaces
