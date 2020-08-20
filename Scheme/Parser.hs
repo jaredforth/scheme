@@ -96,40 +96,6 @@ parseExpr = parseAtom
                 char ')'
                 return x
 
-
-eval :: Env -> LispVal -> IOThrowsError LispVal
-eval env val@(String _) = return val
-eval env val@(Number _) = return val
-eval env val@(Bool _) = return val
-eval env (Atom id) = getVar env id
-eval env (List [Atom "quote", val]) = return val
-eval env (List [Atom "if", pred, conseq, alt]) =
-     do result <- eval env pred
-        case result of
-             Bool False -> eval env alt
-             otherwise -> eval env conseq
-eval env (List [Atom "set!", Atom var, form]) =
-     eval env form >>= setVar env var
-eval env (List [Atom "define", Atom var, form]) =
-     eval env form >>= defineVar env var
-eval env (List (Atom "define" : List (Atom var : params) : body)) =
-  makeNormalFunc env params body >>= defineVar env var
-eval env (List (Atom "define" : DottedList (Atom var : params) varargs : body)) =
-  makeVarArgs varargs env params body >>= defineVar env var
-eval env (List (Atom "lambda" : List params : body)) =
-  makeNormalFunc env params body
-eval env (List (Atom "lambda" : DottedList params varargs : body)) =
-  makeVarArgs varargs env params body
-eval env (List (Atom "lambda" : varargs@(Atom _) : body)) =
-  makeVarArgs varargs env [] body
-eval env (List [Atom "load", String filename]) =
-   load filename >>= liftM last . mapM (eval env)
-eval env (List (function : args)) = do
-     func <- eval env function
-     argVals <- mapM (eval env) args
-     apply func argVals
-eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
-
 type Env = IORef [(String, IORef LispVal)]
 
 nullEnv :: IO Env
@@ -195,7 +161,6 @@ showError (Parser parseErr)             = "Parse error at " ++ show parseErr
 load :: String -> IOThrowsError [LispVal]
 load filename = (liftIO $ readFile filename) >>= liftThrows . readExprList
 
-instance Show LispVal where show = showVal
 
 
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
@@ -214,6 +179,56 @@ apply (Func params varargs body closure) args =
 
 apply (IOFunc func) args = func args
 
+isBound :: Env -> String -> IO Bool
+isBound envRef var = readIORef envRef >>= return . maybe False (const True) . lookup var
+
+
+
+bindVars :: Env -> [(String, LispVal)] -> IO Env
+bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
+     where extendEnv bindings env = liftM (++ env) (mapM addBinding bindings)
+           addBinding (var, value) = do ref <- newIORef value
+                                        return (var, ref)
+
+liftThrows :: ThrowsError a -> IOThrowsError a
+liftThrows (Left err) = throwError err
+liftThrows (Right val) = return val
+
+-- | Create the evaluator. This maps a 'code' datatype to a 'data' datatype.
+eval :: Env -> LispVal -> IOThrowsError LispVal
+eval env val@(String _) = return val
+eval env val@(Number _) = return val
+eval env val@(Bool _) = return val
+eval env (Atom id) = getVar env id
+eval env (List [Atom "quote", val]) = return val
+eval env (List [Atom "if", pred, conseq, alt]) =
+     do result <- eval env pred
+        case result of
+             Bool False -> eval env alt
+             otherwise -> eval env conseq
+eval env (List [Atom "set!", Atom var, form]) =
+     eval env form >>= setVar env var
+eval env (List [Atom "define", Atom var, form]) =
+     eval env form >>= defineVar env var
+eval env (List (Atom "define" : List (Atom var : params) : body)) =
+  makeNormalFunc env params body >>= defineVar env var
+eval env (List (Atom "define" : DottedList (Atom var : params) varargs : body)) =
+  makeVarArgs varargs env params body >>= defineVar env var
+eval env (List (Atom "lambda" : List params : body)) =
+  makeNormalFunc env params body
+eval env (List (Atom "lambda" : DottedList params varargs : body)) =
+  makeVarArgs varargs env params body
+eval env (List (Atom "lambda" : varargs@(Atom _) : body)) =
+  makeVarArgs varargs env [] body
+eval env (List [Atom "load", String filename]) =
+   load filename >>= liftM last . mapM (eval env)
+eval env (List (function : args)) = do
+     func <- eval env function
+     argVals <- mapM (eval env) args
+     apply func argVals
+eval env badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
+
+-- | Function to specify how to display possible `LispVals`
 showVal :: LispVal -> String
 showVal (String contents) = "\"" ++ contents ++ "\""
 showVal (Atom name) = name
@@ -232,20 +247,9 @@ showVal (DottedList head tail) = "(" ++ unwordsList head ++ " . " ++ showVal tai
 showVal (Port _)   = "<IO port>"
 showVal (IOFunc _) = "<IO primitive>"
 
+-- | Helper function to glue a list of words together with spaces
 unwordsList :: [LispVal] -> String
 unwordsList = unwords . map showVal
 
-isBound :: Env -> String -> IO Bool
-isBound envRef var = readIORef envRef >>= return . maybe False (const True) . lookup var
-
-
-
-bindVars :: Env -> [(String, LispVal)] -> IO Env
-bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
-     where extendEnv bindings env = liftM (++ env) (mapM addBinding bindings)
-           addBinding (var, value) = do ref <- newIORef value
-                                        return (var, ref)
-
-liftThrows :: ThrowsError a -> IOThrowsError a
-liftThrows (Left err) = throwError err
-liftThrows (Right val) = return val
+-- | Make `LispVal` a member of the class `Show`
+instance Show LispVal where show = showVal
