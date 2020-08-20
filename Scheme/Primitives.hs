@@ -22,6 +22,7 @@ primitiveBindings = nullEnv >>= (flip bindVars $ map (makeFunc IOFunc) ioPrimiti
                                                ++ map (makeFunc PrimitiveFunc) primitives)
      where makeFunc constructor (var, func) = (var, constructor func)
 
+-- | Define the list of primitives that are supported
 primitives :: [(String, [LispVal] -> ThrowsError LispVal)]
 primitives = [("+", numericBinop (+)),
               ("-", numericBinop (-)),
@@ -61,6 +62,9 @@ ioPrimitives = [("apply", applyProc),
                 ("read-contents", readContents),
                 ("read-all", readAll)]
 
+-- | Take a primitive Haskell function and wrap it with code
+-- to unpack args, apply a function, and wrap the result in
+-- `Number` constructor
 numericBinop :: (Integer -> Integer -> Integer) -> [LispVal] -> ThrowsError LispVal
 numericBinop op           []  = throwError $ NumArgs 2 []
 numericBinop op singleVal@[_] = throwError $ NumArgs 2 singleVal

@@ -162,8 +162,9 @@ load :: String -> IOThrowsError [LispVal]
 load filename = (liftIO $ readFile filename) >>= liftThrows . readExprList
 
 
-
+-- | Define `apply` function
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
+-- | Map `eval` function over the arguments
 apply (PrimitiveFunc func) args = liftThrows $ func args
 
 apply (Func params varargs body closure) args =
