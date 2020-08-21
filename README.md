@@ -25,7 +25,3 @@ To document with [Haddock](https://haskell-haddock.readthedocs.io/en/latest/mark
 ```shell script
 haddock Main.hs --html -o docs
 ```
-
-## TODOs
-
-- Break into separate files
