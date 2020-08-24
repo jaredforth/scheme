@@ -158,7 +158,7 @@ unpackEquals arg1 arg2 (AnyUnpacker unpacker) =
                 return $ unpacked1 == unpacked2
         `catchError` (const $ return False)
 
--- | Define `equal?` with helper functions 
+-- | Define `equal?` with helper functions
 equal :: [LispVal] -> ThrowsError LispVal
 equal [arg1, arg2] = do
       primitiveEquals <- liftM or $ mapM (unpackEquals arg1 arg2)
