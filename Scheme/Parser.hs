@@ -96,12 +96,56 @@ parseExpr = parseAtom
                 char ')'
                 return x
 
+-- | Define a type for the environment
 type Env = IORef [(String, IORef LispVal)]
 
+-- | An empty environment
 nullEnv :: IO Env
 nullEnv = newIORef []
 
+-- | Error handling functionality on top of IO monad
 type IOThrowsError = ExceptT LispError IO
+
+-- | Lift errors of upper type into monad
+-- See: https://wiki.haskell.org/All_About_Monads#Lifting
+liftThrows :: ThrowsError a -> IOThrowsError a
+liftThrows (Left err) = throwError err
+liftThrows (Right val) = return val
+
+-- | Catch errors
+runIOThrows :: IOThrowsError String -> IO String
+runIOThrows action = runExceptT (trapError action) >>= return . extractValue
+
+-- | Determine if a variable is already bound in the environment
+isBound :: Env -> String -> IO Bool
+isBound envRef var = readIORef envRef >>= return . maybe False (const True) . lookup var
+
+-- | Retrieve current value of a variable
+getVar :: Env -> String -> IOThrowsError LispVal
+getVar envRef var  =  do env <- liftIO $ readIORef envRef
+                         maybe (throwError $ UnboundVar "Getting an unbound variable" var)
+                               (liftIO . readIORef)
+                               (lookup var env)
+
+-- | Set variable value
+setVar :: Env -> String -> LispVal -> IOThrowsError LispVal
+setVar envRef var value = do env <- liftIO $ readIORef envRef
+                             maybe (throwError $ UnboundVar "Setting an unbound variable" var)
+                                   (liftIO . (flip writeIORef value))
+                                   (lookup var env)
+                             return value
+
+-- | Define a new variable, regardless of if it is already bound
+defineVar :: Env -> String -> LispVal -> IOThrowsError LispVal
+defineVar envRef var value = do
+     alreadyDefined <- liftIO $ isBound envRef var
+     if alreadyDefined
+        then setVar envRef var value >> return value
+        else liftIO $ do
+             valueRef <- newIORef value
+             env <- readIORef envRef
+             writeIORef envRef ((var, valueRef) : env)
+             return value
 
 instance Show LispError where show = showError
 
@@ -140,30 +184,6 @@ readOrThrow parser input = case parse parser "lisp" input of
     Left err  -> throwError $ Parser err
     Right val -> return val
 
-getVar :: Env -> String -> IOThrowsError LispVal
-getVar envRef var  =  do env <- liftIO $ readIORef envRef
-                         maybe (throwError $ UnboundVar "Getting an unbound variable" var)
-                               (liftIO . readIORef)
-                               (lookup var env)
-
-setVar :: Env -> String -> LispVal -> IOThrowsError LispVal
-setVar envRef var value = do env <- liftIO $ readIORef envRef
-                             maybe (throwError $ UnboundVar "Setting an unbound variable" var)
-                                   (liftIO . (flip writeIORef value))
-                                   (lookup var env)
-                             return value
-
-defineVar :: Env -> String -> LispVal -> IOThrowsError LispVal
-defineVar envRef var value = do
-     alreadyDefined <- liftIO $ isBound envRef var
-     if alreadyDefined
-        then setVar envRef var value >> return value
-        else liftIO $ do
-             valueRef <- newIORef value
-             env <- readIORef envRef
-             writeIORef envRef ((var, valueRef) : env)
-             return value
-
 makeFunc varargs env params body = return $ Func (map showVal params) varargs body env
 makeNormalFunc = makeFunc Nothing
 makeVarArgs = makeFunc . Just . showVal
@@ -191,20 +211,11 @@ apply (Func params varargs body closure) args =
 
 apply (IOFunc func) args = func args
 
-isBound :: Env -> String -> IO Bool
-isBound envRef var = readIORef envRef >>= return . maybe False (const True) . lookup var
-
-
-
 bindVars :: Env -> [(String, LispVal)] -> IO Env
 bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
      where extendEnv bindings env = liftM (++ env) (mapM addBinding bindings)
            addBinding (var, value) = do ref <- newIORef value
                                         return (var, ref)
-
-liftThrows :: ThrowsError a -> IOThrowsError a
-liftThrows (Left err) = throwError err
-liftThrows (Right val) = return val
 
 -- | Create the evaluator. This maps a 'code' datatype to a 'data' datatype.
 eval :: Env -> LispVal -> IOThrowsError LispVal
