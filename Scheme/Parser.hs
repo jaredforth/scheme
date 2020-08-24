@@ -184,14 +184,16 @@ readOrThrow parser input = case parse parser "lisp" input of
     Left err  -> throwError $ Parser err
     Right val -> return val
 
+-- | Helper function to create a function
 makeFunc varargs env params body = return $ Func (map showVal params) varargs body env
+-- | Specialization of `makeFunc` for a normal function
 makeNormalFunc = makeFunc Nothing
+-- | Specialization of `makeFunc` for a variable argument
 makeVarArgs = makeFunc . Just . showVal
 
-
+-- | Read and parse a file full of statements
 load :: String -> IOThrowsError [LispVal]
 load filename = (liftIO $ readFile filename) >>= liftThrows . readExprList
-
 
 -- | Define `apply` function
 apply :: LispVal -> [LispVal] -> IOThrowsError LispVal
