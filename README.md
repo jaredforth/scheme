@@ -1,3 +1,4 @@
+![Haskell CI](https://github.com/jaredforth/scheme/workflows/Haskell%20CI/badge.svg)
 [![Build Status](https://travis-ci.com/jaredforth/scheme.svg?token=mH2pScYxqRkBEzpBQAu6&branch=master)](https://travis-ci.com/jaredforth/scheme)
 ![GitHub](https://img.shields.io/github/license/jaredforth/scheme)
 
