@@ -1,4 +1,5 @@
 ![Haskell CI](https://github.com/jaredforth/scheme/workflows/Haskell%20CI/badge.svg)
+[![DeepScan grade](https://deepscan.io/api/teams/11311/projects/14222/branches/258612/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=11311&pid=14222&bid=258612)
 [![Build Status](https://travis-ci.com/jaredforth/scheme.svg?token=mH2pScYxqRkBEzpBQAu6&branch=master)](https://travis-ci.com/jaredforth/scheme)
 ![GitHub](https://img.shields.io/github/license/jaredforth/scheme)
 
